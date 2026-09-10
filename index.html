@@ -1,0 +1,1220 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Lectura → Tele</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="icons/icon-180.png">
+<link rel="apple-touch-icon" sizes="167x167" href="icons/icon-167.png">
+<link rel="apple-touch-icon" sizes="152x152" href="icons/icon-152.png">
+<meta name="apple-mobile-web-app-title" content="Lectura y Tele">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0E1B33">
+<meta name="color-scheme" content="dark">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap');
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  html { background: #0E1B33 !important; }
+  body {
+    margin: 0; background: #0E1B33 !important; font-family: 'Inter', system-ui, sans-serif;
+    min-height: 100vh; padding: 2.5rem 1rem;
+  }
+  .font-display { font-family: 'Fraunces', Georgia, serif; }
+  .wrap { max-width: 720px; margin: 0 auto; }
+  header { text-align: center; margin-bottom: 2rem; }
+  .eyebrow { color: #8B93A3; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 0.75rem; }
+  h1 { color: #F3EEE1; font-size: 1.9rem; margin: 0; }
+  .sub { color: #8B93A3; margin-top: 0.75rem; font-size: 0.95rem; }
+  .sub b { color: #5B8DEF; font-weight: 600; }
+  .panel { background: #1B212C; border: 1px solid #2A3240; border-radius: 1rem; padding: 1.4rem; }
+  .tv-card { display: flex; flex-direction: column; align-items: center; gap: 1rem; margin-bottom: 1.25rem; }
+  .tv-bg { width: 100%; border-radius: 0.75rem; padding: 1.3rem 1rem; display: flex; flex-direction: column; align-items: center; gap: 0.25rem; background: rgba(167,148,209,0.14); }
+  .tv-label { display: flex; align-items: center; gap: 0.4rem; color: #A794D1; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.15em; font-weight: 500; }
+  .tv-value { font-size: 3rem; color: #F3EEE1; line-height: 1.1; font-variant-numeric: tabular-nums; }
+  .hint { color: #8B93A3; font-size: 0.75rem; text-align: center; margin-top: -0.4rem; }
+  .btn-round { display: flex; align-items: center; gap: 0.5rem; border-radius: 999px; padding: 0.65rem 1.6rem; font-size: 0.9rem; font-weight: 600; border: none; cursor: pointer; }
+  .btn-round:disabled { opacity: 0.4; cursor: not-allowed; }
+  .chips { display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: center; }
+  .chip { border-radius: 0.5rem; border: 1px solid; padding: 0.35rem 0.7rem; font-size: 0.75rem; font-weight: 500; background: transparent; cursor: pointer; }
+  .chip:disabled { opacity: 0.4; cursor: not-allowed; }
+  .grid2 { display: grid; grid-template-columns: 1fr; gap: 1.25rem; margin-bottom: 1.25rem; }
+  @media (min-width: 640px) { .grid2 { grid-template-columns: 1fr 1fr; } }
+  .card { display: flex; flex-direction: column; gap: 1rem; }
+  .card-head { display: flex; align-items: flex-start; justify-content: space-between; }
+  .card-head h2 { color: #F3EEE1; margin: 0; font-size: 1.25rem; }
+  .reset-link { display: flex; align-items: center; gap: 0.25rem; background: none; border: none; color: #8B93A3; font-size: 0.75rem; cursor: pointer; }
+  .stat-pill { border-radius: 0.75rem; padding: 0.65rem 1rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem; }
+  .stat-pill .n { font-family: 'Fraunces', Georgia, serif; font-size: 1.4rem; color: #F3EEE1; }
+  .stat-pill .u { color: #8B93A3; font-size: 0.75rem; }
+  .stats-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem; }
+  .stats-box { border: 1px solid #2A3240; border-radius: 0.5rem; padding: 0.5rem; display: flex; flex-direction: column; align-items: center; }
+  .stats-box .label { color: #8B93A3; font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.15em; }
+  .stats-box .val { font-family: 'Fraunces', Georgia, serif; font-size: 1.1rem; color: #F3EEE1; }
+  .timer-box { display: flex; flex-direction: column; align-items: center; gap: 0.6rem; padding: 0.25rem 0; }
+  .dot { width: 8px; height: 8px; border-radius: 999px; animation: pulse 1.4s infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+  .clock { font-family: 'Fraunces', Georgia, serif; font-size: 1.9rem; color: #F3EEE1; font-variant-numeric: tabular-nums; }
+  .manual-label { color: #8B93A3; font-size: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #2A3240; }
+  .mini-form { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.4rem; }
+  .mini-form input { width: 100%; background: #12161F; color: #F3EEE1; border: 1px solid #2A3240; border-radius: 0.5rem; padding: 0.4rem 0.7rem; font-size: 0.85rem; outline: none; }
+  .mini-form input[type=date] { font-family: inherit; }
+  .mini-form input:disabled { opacity: 0.5; }
+  .mini-form button { flex-shrink: 0; border-radius: 0.5rem; padding: 0.4rem 0.7rem; font-size: 0.75rem; font-weight: 600; border: none; cursor: pointer; white-space: nowrap; }
+  .mini-form button:disabled { opacity: 0.5; cursor: not-allowed; }
+  footer { display: flex; align-items: center; justify-content: space-between; margin-top: 1.5rem; }
+  .saving { color: #8B93A3; font-size: 0.75rem; height: 1rem; }
+  .reset-all { display: flex; align-items: center; gap: 0.4rem; background: none; border: none; color: #8B93A3; font-size: 0.75rem; cursor: pointer; }
+  .error-box { background: rgba(217,119,107,0.1); color: #D9776B; border: 1px solid #D9776B; border-radius: 0.5rem; padding: 0.5rem 1rem; font-size: 0.85rem; text-align: center; margin-bottom: 1.5rem; }
+  .chart-card { margin-bottom: 1.25rem; }
+  .chart-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.75rem; }
+  .chart-title { display: flex; align-items: center; gap: 0.5rem; color: #F3EEE1; font-size: 1.1rem; }
+  .legend { display: flex; align-items: center; gap: 0.9rem; font-size: 0.75rem; color: #8B93A3; }
+  .legend span { display: inline-flex; align-items: center; gap: 0.3rem; }
+  .dot-sm { width: 8px; height: 8px; border-radius: 999px; display: inline-block; }
+  .chart-empty { color: #8B93A3; font-size: 0.9rem; text-align: center; padding: 2.5rem 0; }
+  .chart-body-row { display: flex; gap: 0.6rem; align-items: stretch; }
+  .chart-plot { flex: 1; position: relative; }
+  .chart-area { display: flex; align-items: flex-end; gap: 0.35rem; height: 160px; position: relative; }
+  .grid-line { position: absolute; left: 0; right: 0; border-top: 1px dashed #2A3240; }
+  .month-col { flex: 1; display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end; gap: 0.3rem; }
+  .bars-pair { display: flex; align-items: flex-end; gap: 2px; height: 100%; width: 100%; justify-content: center; }
+  .bar-col { flex: 1; max-width: 12px; height: 100%; display: flex; align-items: flex-end; justify-content: center; }
+  .bar { position: relative; width: 100%; border-radius: 3px 3px 0 0; min-height: 2px; }
+  .chart-axis { display: flex; flex-direction: column; justify-content: space-between; height: 160px; padding-bottom: 1.4rem; }
+  .chart-axis span { color: #8B93A3; font-size: 0.65rem; }
+  .month-label { color: #8B93A3; font-size: 0.62rem; }
+  .chart-caption { color: #8B93A3; font-size: 0.68rem; text-align: center; margin-top: 0.5rem; }
+  .select-input { background: #12161F; color: #F3EEE1; border: 1px solid #2A3240; border-radius: 0.5rem; padding: 0.3rem 0.5rem; font-size: 0.75rem; outline: none; }
+  .records-card { margin-bottom: 1.25rem; display: flex; flex-direction: column; gap: 0.75rem; }
+  .records-title { display: flex; align-items: center; gap: 0.5rem; color: #F3EEE1; font-size: 1.1rem; margin-bottom: 0.25rem; }
+  .record-item { display: flex; align-items: center; gap: 0.7rem; border: 1px solid #2A3240; border-radius: 0.6rem; padding: 0.6rem 0.8rem; }
+  .record-icon { font-size: 1.1rem; flex-shrink: 0; }
+  .record-label { color: #8B93A3; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.12em; }
+  .record-value { color: #F3EEE1; font-size: 0.95rem; font-family: 'Fraunces', Georgia, serif; }
+  .record-empty { color: #8B93A3; font-size: 0.85rem; text-align: center; padding: 1rem 0; }
+  .trophy-card { display: flex; flex-direction: column; gap: 0.9rem; }
+  .trophy-controls { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+  .trophy-result { display: flex; flex-direction: column; align-items: center; gap: 0.4rem; padding: 1rem; border-radius: 0.75rem; background: rgba(255,255,255,0.03); text-align: center; }
+  .trophy-icon { font-size: 2rem; }
+  .trophy-winner { font-family: 'Fraunces', Georgia, serif; font-size: 1.3rem; color: #F3EEE1; }
+  .trophy-detail { color: #8B93A3; font-size: 0.8rem; }
+  .timeup-overlay {
+    position: fixed; inset: 0; z-index: 100;
+    background: rgba(18,22,31,0.96);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 1.2rem; padding: 2rem; text-align: center;
+    animation: fadeIn 0.3s ease;
+  }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  .timeup-icon { font-size: 4rem; animation: bounce 1s infinite; }
+  @keyframes bounce { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+  .timeup-title { font-family: 'Fraunces', Georgia, serif; font-size: 2rem; color: #F3EEE1; }
+  .timeup-sub { color: #8B93A3; font-size: 1rem; }
+  .timeup-btn {
+    border: none; border-radius: 999px; padding: 0.8rem 2rem;
+    background: #A794D1; color: #12161F; font-size: 1rem; font-weight: 600; cursor: pointer;
+  }
+  @media (prefers-reduced-motion: reduce) { .timeup-icon { animation: none; } .timeup-overlay { animation: none; } }
+  .tabs { display: flex; gap: 0.5rem; justify-content: center; margin-bottom: 1.5rem; }
+  .tab-btn {
+    border: 1px solid #2A3240; background: transparent; color: #8B93A3;
+    border-radius: 999px; padding: 0.5rem 1.3rem; font-size: 0.85rem; font-weight: 600; cursor: pointer;
+  }
+  .tab-btn.active { background: #F3EEE1; color: #12161F; border-color: #F3EEE1; }
+  .rw-section-title { color: #F3EEE1; font-size: 1.1rem; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem; }
+  .rw-settings { display: flex; flex-direction: column; gap: 0.6rem; margin-bottom: 1.25rem; }
+  .rw-row { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+  .rw-row label { color: #8B93A3; font-size: 0.78rem; min-width: 7.5rem; }
+  .rw-row input[type=text] { flex: 1; min-width: 8rem; background: #12161F; color: #F3EEE1; border: 1px solid #2A3240; border-radius: 0.5rem; padding: 0.4rem 0.7rem; font-size: 0.85rem; outline: none; }
+  .rw-row input[type=number] { width: 4.5rem; background: #12161F; color: #F3EEE1; border: 1px solid #2A3240; border-radius: 0.5rem; padding: 0.4rem 0.5rem; font-size: 0.85rem; outline: none; }
+  .task-list { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 0.75rem; }
+  .task-row { display: flex; align-items: center; gap: 0.6rem; border: 1px solid #2A3240; border-radius: 0.6rem; padding: 0.5rem 0.8rem; }
+  .task-name { color: #F3EEE1; font-size: 0.9rem; flex: 1; }
+  .task-del { background: none; border: none; color: #8B93A3; cursor: pointer; font-size: 0.9rem; }
+  .task-checks { display: flex; gap: 0.9rem; }
+  .task-check { display: flex; align-items: center; gap: 0.4rem; font-size: 0.8rem; color: #8B93A3; cursor: pointer; user-select: none; }
+  .task-check input { accent-color: currentColor; width: 1.6rem; height: 1.6rem; cursor: pointer; }
+  .task-row-week { border: 1px solid #2A3240; border-radius: 0.6rem; padding: 0.7rem 0.8rem; display: flex; flex-direction: column; gap: 0.55rem; }
+  .task-row-head { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+  .week-grid { display: flex; flex-direction: column; gap: 0.35rem; }
+  .week-grid-row { display: grid; grid-template-columns: 3.2rem repeat(7, 1fr); gap: 0.3rem; align-items: center; }
+  .week-grid-label { font-size: 0.75rem; font-weight: 600; }
+  .week-day-letter { text-align: center; color: #8B93A3; font-size: 0.68rem; }
+  .week-day-letter.is-today { color: #F3EEE1; font-weight: 700; }
+  .day-cell {
+    aspect-ratio: 1; width: 100%; max-width: 2.4rem; margin: 0 auto;
+    border: 1px solid #2A3240; border-radius: 0.4rem; background: #12161F;
+    color: #12161F; font-size: 0.9rem; font-weight: 700; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .day-cell.done { color: #0E1B33; }
+  .day-cell.is-today:not(.done) { border-color: #8B93A3; }
+  .day-cell:disabled { opacity: 0.25; cursor: not-allowed; }
+  .progress-block { margin-bottom: 1rem; }
+  .progress-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.3rem; }
+  .progress-name { color: #F3EEE1; font-size: 0.9rem; font-weight: 600; }
+  .progress-pct { color: #8B93A3; font-size: 0.8rem; }
+  .progress-bar { height: 10px; background: #12161F; border: 1px solid #2A3240; border-radius: 999px; overflow: hidden; position: relative; }
+  .progress-fill { height: 100%; border-radius: 999px; transition: width 0.4s ease; }
+  .progress-goal { position: absolute; top: -2px; bottom: -2px; width: 2px; background: #F3EEE1; opacity: 0.5; }
+  .prize-won { color: #E7C94C; font-size: 0.8rem; margin-top: 0.25rem; }
+  .rw-empty { color: #8B93A3; font-size: 0.85rem; text-align: center; padding: 1rem 0; }
+</style>
+</head>
+<body style="background:#0E1B33; color:#F3EEE1;">
+<div id="timeup-overlay" class="timeup-overlay" style="display:none;">
+  <div class="timeup-icon">📺</div>
+  <div class="timeup-title">¡Se acabó el tiempo de tele!</div>
+  <div class="timeup-sub">Para conseguir más minutos… ¡a leer! 📚</div>
+  <button id="timeup-close" class="timeup-btn">Vale</button>
+</div>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Leo &amp; Berta</div>
+    <h1 class="font-display" id="main-title">El trueque de páginas y pantalla</h1>
+    <p class="sub" id="main-sub">Cada minuto leído vale <b>2 minutos</b> de tele.</p>
+  </header>
+
+  <div id="error" class="error-box" style="display:none;"></div>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="contadores">Contadores</button>
+    <button class="tab-btn" data-tab="recompensas">Recompensas</button>
+  </div>
+
+  <div id="tab-contadores">
+  <div class="panel tv-card">
+    <div class="tv-bg">
+      <div class="tv-label"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="15" rx="2"/><polyline points="17 2 12 7 7 2"/></svg><span id="tv-label-text">Tele acumulada</span></div>
+      <div id="tv-value" class="tv-value font-display">0 min</div>
+    </div>
+    <button id="tv-start-btn" class="btn-round"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg> Iniciar</button>
+    <button id="tv-stop-btn" class="btn-round" style="display:none;"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="4" width="16" height="16"/></svg> Parar</button>
+    <div id="tv-hint" class="hint">Pulsa iniciar para poner la cuenta atrás mientras ven la tele</div>
+    <div class="chips">
+      <button class="chip tv-chip" data-min="15">Gastar 15 min</button>
+      <button class="chip tv-chip" data-min="30">Gastar 30 min</button>
+      <button class="chip tv-chip" data-min="60">Gastar 60 min</button>
+    </div>
+    <div class="mini-form" style="width:100%; max-width:18rem;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#A794D1" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      <input id="tv-manual-input" type="number" min="1" placeholder="otra cantidad" />
+      <button id="tv-manual-btn" style="background:#A794D1; color:#12161F;">Gastar</button>
+    </div>
+  </div>
+
+  <div class="grid2" id="children-grid"></div>
+
+  <div class="panel chart-card" id="chart-card">
+    <div class="chart-head">
+      <div class="chart-title font-display"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8B93A3" stroke-width="2"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg> <span id="chart-title-text">Lectura por mes</span></div>
+      <select id="chart-year-select" class="select-input"></select>
+    </div>
+    <div class="legend" style="margin-bottom:0.75rem;">
+      <span><span class="dot-sm" style="background:#5B8DEF;"></span>Leo</span>
+      <span><span class="dot-sm" style="background:#EC6FA0;"></span>Berta</span>
+    </div>
+    <div id="chart-body"></div>
+  </div>
+
+  <div class="panel records-card" id="records-card">
+    <div class="records-title font-display">🏅 Récords de lectura</div>
+    <div id="records-body"></div>
+  </div>
+
+  <div class="panel trophy-card" id="trophy-card">
+    <div class="records-title font-display">🏆 Campeón del mes</div>
+    <div class="trophy-controls">
+      <select id="trophy-month-select" class="select-input"></select>
+      <select id="trophy-year-select" class="select-input"></select>
+    </div>
+    <div id="trophy-body"></div>
+  </div>
+  </div><!-- fin tab-contadores -->
+
+  <div id="tab-recompensas" style="display:none;">
+    <div class="panel" style="margin-bottom:1.25rem;">
+      <div class="rw-section-title font-display">⚙️ Premios y objetivos</div>
+      <div class="rw-settings">
+        <div class="rw-row">
+          <label>Premio semanal</label>
+          <input type="text" id="rw-weekly-prize" placeholder="ej. Helado el domingo" />
+        </div>
+        <div class="rw-row">
+          <label>Objetivo semanal</label>
+          <input type="number" id="rw-weekly-pct" min="1" max="100" /> <span style="color:#8B93A3;font-size:0.8rem;">% de retos cumplidos</span>
+        </div>
+        <div class="rw-row">
+          <label>Premio mensual</label>
+          <input type="text" id="rw-monthly-prize" placeholder="ej. Excursión o juguete" />
+        </div>
+        <div class="rw-row">
+          <label>Objetivo mensual</label>
+          <input type="number" id="rw-monthly-pct" min="1" max="100" /> <span style="color:#8B93A3;font-size:0.8rem;">% de retos cumplidos</span>
+        </div>
+        <div class="rw-row" style="justify-content:flex-end;">
+          <button id="rw-save-settings" class="tab-btn active" style="padding:0.4rem 1.1rem;font-size:0.8rem;">Guardar</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" style="margin-bottom:1.25rem;">
+      <div class="rw-section-title font-display">📋 Retos diarios</div>
+      <div class="task-list" id="rw-task-list"></div>
+      <div class="mini-form">
+        <input type="text" id="rw-new-task" placeholder="nuevo reto (ej. Hacer la cama)" style="flex:1;background:#12161F;color:#F3EEE1;border:1px solid #2A3240;border-radius:0.5rem;padding:0.4rem 0.7rem;font-size:0.85rem;outline:none;" />
+        <button id="rw-add-task" style="background:#F3EEE1;color:#12161F;">Añadir</button>
+      </div>
+      <div style="color:#8B93A3;font-size:0.72rem;margin-top:0.6rem;">Toca la casilla del día correspondiente cuando cada niño cumpla el reto. La semana va de domingo a sábado.</div>
+    </div>
+
+    <div class="panel" style="margin-bottom:1.25rem;">
+      <div class="rw-section-title font-display">🎯 Progreso hacia los premios</div>
+      <div id="rw-progress-body"></div>
+    </div>
+
+    <div class="panel">
+      <div class="rw-section-title font-display">📆 Semanas cumplidas</div>
+      <div class="rw-row" style="margin-bottom:0.9rem;">
+        <select id="rw-stats-year" class="select-input"></select>
+      </div>
+      <div id="rw-weeks-body"></div>
+    </div>
+  </div><!-- fin tab-recompensas -->
+
+  <footer>
+    <div id="saving" class="saving"></div>
+    <div style="display:flex;align-items:center;gap:1rem;">
+      <button id="export-lecturas" class="reset-all" style="color:#5B8DEF;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Exportar lecturas</button>
+      <button id="export-retos" class="reset-all" style="color:#EC6FA0;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Exportar retos</button>
+      <button id="reset-all" class="reset-all"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg> Reiniciar todo</button>
+    </div>
+  </footer>
+</div>
+
+<script>
+const STORAGE_KEY = 'trueque-leo-berta-standalone-v1';
+const DEFAULT_STATE = {
+  leo: { totalRead: 0, timerStart: null },
+  berta: { totalRead: 0, timerStart: null },
+  tv: 0,
+  tvTimerStart: null,
+  tvTimerStartMinutes: 0,
+  history: [],
+  updatedAt: 0,
+  rewards: {
+    tasks: [],
+    completions: [],
+    weeklyPrize: '',
+    monthlyPrize: '',
+    weeklyPct: 80,
+    monthlyPct: 80,
+  },
+};
+const KIDS = [
+  { key: 'leo', name: 'Leo', color: '#5B8DEF', soft: 'rgba(91,141,239,0.12)' },
+  { key: 'berta', name: 'Berta', color: '#EC6FA0', soft: 'rgba(236,111,160,0.12)' },
+];
+
+let state = loadState();
+let audioCtx = null;
+let tickInterval = null;
+let selectedYear = new Date().getFullYear();
+let trophyMonth = new Date().getMonth() + 1;
+let trophyYear = new Date().getFullYear();
+let rwStatsYear = new Date().getFullYear();
+let lastYearsKey = null;
+let rwSelectorsFilled = false;
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      return {
+        ...DEFAULT_STATE,
+        ...parsed,
+        history: parsed.history || [],
+        rewards: { ...DEFAULT_STATE.rewards, ...(parsed.rewards || {}) },
+      };
+    }
+  } catch (e) {}
+  return JSON.parse(JSON.stringify(DEFAULT_STATE));
+}
+
+function saveState() {
+  const savingEl = document.getElementById('saving');
+  state.updatedAt = Date.now();
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    savingEl.textContent = 'Guardado';
+    setTimeout(() => { if (savingEl.textContent === 'Guardado') savingEl.textContent = ''; }, 900);
+  } catch (e) {
+    document.getElementById('error').style.display = 'block';
+    document.getElementById('error').textContent = 'No se ha podido guardar el progreso en este dispositivo.';
+  }
+  // Sincroniza con los demás móviles en segundo plano; si falla (sin conexión,
+  // función no disponible…) la app sigue funcionando solo en local.
+  fetch('/.netlify/functions/data', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(state),
+  }).catch(() => {});
+}
+
+async function syncFromRemote() {
+  try {
+    const res = await fetch('/.netlify/functions/data', { cache: 'no-store' });
+    if (!res.ok) return;
+    const remote = await res.json();
+    if (remote && (remote.updatedAt || 0) > (state.updatedAt || 0)) {
+      state = {
+        ...DEFAULT_STATE,
+        ...remote,
+        rewards: { ...DEFAULT_STATE.rewards, ...(remote.rewards || {}) },
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      render();
+    }
+  } catch (e) {
+    // Sin conexión o función no disponible todavía: seguimos con los datos locales.
+  }
+}
+
+function formatMinutes(mins) {
+  const m = Math.max(0, Math.round(mins));
+  const h = Math.floor(m / 60);
+  const r = m % 60;
+  if (h === 0) return `${r} min`;
+  if (r === 0) return `${h} h`;
+  return `${h} h ${r} min`;
+}
+
+function formatClock(ms) {
+  const totalSeconds = Math.max(0, Math.floor(ms / 1000));
+  const mm = Math.floor(totalSeconds / 60);
+  const ss = totalSeconds % 60;
+  return `${String(mm).padStart(2, '0')}:${String(ss).padStart(2, '0')}`;
+}
+
+function dateKey(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+function monthKey(d) {
+  return dateKey(d).slice(0, 7);
+}
+
+function sumHistory(history, child, predicate) {
+  return history
+    .filter((h) => h.child === child && predicate(h.date))
+    .reduce((sum, h) => sum + h.minutes, 0);
+}
+
+const MONTH_LABELS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+const MONTH_FULL = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+
+function buildYearData(history, year) {
+  return MONTH_LABELS.map((label, i) => {
+    const mk = `${year}-${String(i + 1).padStart(2, '0')}`;
+    return {
+      month: label,
+      leo: sumHistory(history, 'leo', (d) => d.slice(0, 7) === mk),
+      berta: sumHistory(history, 'berta', (d) => d.slice(0, 7) === mk),
+    };
+  });
+}
+
+function getAvailableYears(history) {
+  const years = new Set(history.map((h) => Number(h.date.slice(0, 4))));
+  years.add(new Date().getFullYear());
+  return Array.from(years).sort((a, b) => b - a);
+}
+
+function formatDatePretty(dateStr) {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  return `${d} ${MONTH_LABELS[m - 1].toLowerCase()} ${y}`;
+}
+
+function groupSum(history, keyFn) {
+  const map = {};
+  history.forEach((h) => {
+    const k = keyFn(h);
+    map[k] = (map[k] || 0) + h.minutes;
+  });
+  return map;
+}
+
+function bestEntry(map) {
+  let bestKey = null;
+  let bestVal = -1;
+  Object.entries(map).forEach(([k, v]) => {
+    if (v > bestVal) { bestVal = v; bestKey = k; }
+  });
+  return bestKey ? { key: bestKey, value: bestVal } : null;
+}
+
+function getBestDayRecord(history) {
+  const map = groupSum(history, (h) => `${h.child}|${h.date}`);
+  const best = bestEntry(map);
+  if (!best) return null;
+  const [child, date] = best.key.split('|');
+  return { child, date, minutes: best.value };
+}
+
+function getBestMonthRecord(history) {
+  const map = groupSum(history, (h) => `${h.child}|${h.date.slice(0, 7)}`);
+  const best = bestEntry(map);
+  if (!best) return null;
+  const [child, monthKeyStr] = best.key.split('|');
+  const [y, m] = monthKeyStr.split('-').map(Number);
+  return { child, year: y, month: m, minutes: best.value };
+}
+
+function kidByKey(key) {
+  return KIDS.find((k) => k.key === key);
+}
+
+function ensureAudio() {
+  if (!audioCtx) {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (Ctx) audioCtx = new Ctx();
+  }
+  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+}
+
+function playAlarm() {
+  if (!audioCtx) return;
+  [0, 0.35, 0.7].forEach((t) => {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = 880;
+    gain.gain.setValueAtTime(0.0001, audioCtx.currentTime + t);
+    gain.gain.exponentialRampToValueAtTime(0.3, audioCtx.currentTime + t + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + t + 0.28);
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.start(audioCtx.currentTime + t); osc.stop(audioCtx.currentTime + t + 0.3);
+  });
+}
+
+function logReading(child, minutes, date) {
+  if (!minutes || minutes <= 0) return;
+  const today = dateKey(new Date());
+  let entryDate = today;
+  if (date && /^\d{4}-\d{2}-\d{2}$/.test(date) && date <= today) {
+    entryDate = date;
+  }
+  state[child].totalRead += minutes;
+  state.tv += minutes * 2;
+  state.history.push({ child, minutes, date: entryDate });
+  saveState(); render();
+}
+
+function startTimer(child) {
+  state[child].timerStart = Date.now();
+  saveState(); render();
+}
+
+function stopTimer(child) {
+  const start = state[child].timerStart;
+  if (!start) return;
+  const minutes = Math.max(1, Math.round((Date.now() - start) / 60000));
+  state[child].totalRead += minutes;
+  state[child].timerStart = null;
+  state.tv += minutes * 2;
+  state.history.push({ child, minutes, date: dateKey(new Date()) });
+  saveState(); render();
+}
+
+function resetChild(child, name) {
+  if (confirm(`¿Reiniciar las lecturas de ${name}? La tele acumulada no se ve afectada.`)) {
+    state[child] = { totalRead: 0, timerStart: null };
+    saveState(); render();
+  }
+}
+
+function spendTv(minutes) {
+  if (!minutes || minutes <= 0) return;
+  state.tv = Math.max(0, state.tv - minutes);
+  saveState(); render();
+}
+
+function startTvCountdown() {
+  if (state.tv <= 0) return;
+  ensureAudio();
+  state.tvTimerStart = Date.now();
+  state.tvTimerStartMinutes = state.tv;
+  saveState(); render();
+}
+
+function stopTvCountdown(auto) {
+  if (!state.tvTimerStart) return;
+  const elapsedMinutes = (Date.now() - state.tvTimerStart) / 60000;
+  const remaining = Math.max(0, state.tvTimerStartMinutes - elapsedMinutes);
+  state.tv = auto ? 0 : Math.round(remaining);
+  state.tvTimerStart = null;
+  state.tvTimerStartMinutes = 0;
+  saveState(); render();
+  if (auto) {
+    playAlarm();
+    document.getElementById('timeup-overlay').style.display = 'flex';
+  }
+}
+
+function resetAll() {
+  if (confirm('¿Reiniciar la tele acumulada y las lecturas de Leo y Berta? Los retos y premios definidos se conservan. Esto no se puede deshacer.')) {
+    const rewards = { ...state.rewards, completions: [] };
+    state = { ...JSON.parse(JSON.stringify(DEFAULT_STATE)), rewards };
+    saveState(); render();
+  }
+}
+
+function anyTimerRunning() {
+  return !!(state.leo.timerStart || state.berta.timerStart || state.tvTimerStart);
+}
+
+function ensureTicking() {
+  if (anyTimerRunning() && !tickInterval) {
+    tickInterval = setInterval(() => {
+      if (state.tvTimerStart) {
+        const elapsedSeconds = (Date.now() - state.tvTimerStart) / 1000;
+        const totalSeconds = state.tvTimerStartMinutes * 60;
+        if (elapsedSeconds >= totalSeconds) { stopTvCountdown(true); return; }
+      }
+      render();
+    }, 1000);
+  } else if (!anyTimerRunning() && tickInterval) {
+    clearInterval(tickInterval); tickInterval = null;
+  }
+}
+
+function renderChildCard(kid) {
+  const data = state[kid.key];
+  const running = !!data.timerStart;
+  const elapsedMs = running ? Date.now() - data.timerStart : 0;
+  const today = sumHistory(state.history, kid.key, (d) => d === dateKey(new Date()));
+  const month = sumHistory(state.history, kid.key, (d) => d.slice(0, 7) === monthKey(new Date()));
+  const year = sumHistory(state.history, kid.key, (d) => d.slice(0, 4) === String(selectedYear));
+  const div = document.createElement('div');
+  div.className = 'panel card';
+  div.innerHTML = `
+    <div class="card-head">
+      <h2 class="font-display">${kid.name}</h2>
+      <button class="reset-link" data-reset="${kid.key}">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+        Reiniciar
+      </button>
+    </div>
+    <div class="stat-pill" style="background:${kid.soft};">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${kid.color}" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+      <span class="n">${formatMinutes(data.totalRead)}</span>
+      <span class="u">leídos en total</span>
+    </div>
+    <div class="stats-row">
+      <div class="stats-box"><span class="label">Hoy</span><span class="val">${formatMinutes(today)}</span></div>
+      <div class="stats-box"><span class="label">Este mes</span><span class="val">${formatMinutes(month)}</span></div>
+      <div class="stats-box"><span class="label">${selectedYear}</span><span class="val">${formatMinutes(year)}</span></div>
+    </div>
+    <div class="timer-box">
+      ${running ? `
+        <div style="display:flex;align-items:center;gap:0.5rem;">
+          <span class="dot" style="background:${kid.color};"></span>
+          <span class="u">Leyendo…</span>
+        </div>
+        <div class="clock">${formatClock(elapsedMs)}</div>
+        <button class="btn-round child-stop" style="background:${kid.color}; color:#12161F;" data-child="${kid.key}">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="4" width="16" height="16"/></svg> Parar
+        </button>
+      ` : `
+        <button class="btn-round child-start" style="background:${kid.color}; color:#12161F;" data-child="${kid.key}">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg> Iniciar
+        </button>
+      `}
+    </div>
+    <div>
+      <div class="manual-label">o pon los minutos a mano (con su fecha si fue otro día)</div>
+      <div class="mini-form">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="${kid.color}" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        <input type="number" min="1" placeholder="min. leídos" class="child-manual-input" data-child="${kid.key}" ${running ? 'disabled' : ''} />
+        <button class="child-manual-btn" style="background:${kid.color}; color:#12161F;" data-child="${kid.key}" ${running ? 'disabled' : ''}>Sumar</button>
+      </div>
+      <div class="mini-form" style="margin-top:0.4rem;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8B93A3" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        <input type="date" class="child-manual-date" data-child="${kid.key}" value="${dateKey(new Date())}" max="${dateKey(new Date())}" ${running ? 'disabled' : ''} style="color-scheme:dark;" />
+      </div>
+    </div>
+  `;
+  return div;
+}
+
+function renderYearChart() {
+  document.getElementById('chart-title-text').textContent = `Lectura por mes · ${selectedYear}`;
+  const data = buildYearData(state.history, selectedYear);
+  const maxVal = Math.max(1, ...data.map((d) => Math.max(d.leo, d.berta)));
+  const hasData = data.some((d) => d.leo > 0 || d.berta > 0);
+  const body = document.getElementById('chart-body');
+
+  if (!hasData) {
+    body.innerHTML = '<div class="chart-empty">Todavía no hay lecturas registradas ese año.</div>';
+    return;
+  }
+
+  const cols = data.map((d) => `
+    <div class="month-col" title="${d.month}: Leo ${formatMinutes(d.leo)}, Berta ${formatMinutes(d.berta)}">
+      <div class="bars-pair">
+        <div class="bar-col">
+          <div class="bar" style="height:${(d.leo / maxVal) * 100}%; background:#5B8DEF;"></div>
+        </div>
+        <div class="bar-col">
+          <div class="bar" style="height:${(d.berta / maxVal) * 100}%; background:#EC6FA0;"></div>
+        </div>
+      </div>
+      <div class="month-label">${d.month}</div>
+    </div>
+  `).join('');
+
+  const axisTop = Math.round(maxVal);
+  const axisMid = Math.round(maxVal / 2);
+
+  body.innerHTML = `
+    <div class="chart-body-row">
+      <div class="chart-plot">
+        <div class="chart-area">
+          <div class="grid-line" style="bottom:100%;"></div>
+          <div class="grid-line" style="bottom:50%;"></div>
+          <div class="grid-line" style="bottom:0%;"></div>
+          ${cols}
+        </div>
+      </div>
+      <div class="chart-axis">
+        <span>${axisTop} min</span>
+        <span>${axisMid} min</span>
+        <span>0</span>
+      </div>
+    </div>
+    <div class="chart-caption">Minutos leídos al mes · escala orientativa</div>
+  `;
+}
+
+function renderRecords() {
+  const body = document.getElementById('records-body');
+  const bestDay = getBestDayRecord(state.history);
+  const bestMonth = getBestMonthRecord(state.history);
+
+  if (!bestDay && !bestMonth) {
+    body.innerHTML = '<div class="record-empty">Todavía no hay suficientes lecturas para marcar récords.</div>';
+    return;
+  }
+
+  const dayHtml = bestDay ? `
+    <div class="record-item">
+      <span class="record-icon">📖</span>
+      <div>
+        <div class="record-label">Mejor día</div>
+        <div class="record-value">${formatDatePretty(bestDay.date)} · ${formatMinutes(bestDay.minutes)} · <span style="color:${kidByKey(bestDay.child).color};">${kidByKey(bestDay.child).name}</span></div>
+      </div>
+    </div>
+  ` : '';
+
+  const monthHtml = bestMonth ? `
+    <div class="record-item">
+      <span class="record-icon">📅</span>
+      <div>
+        <div class="record-label">Mejor mes</div>
+        <div class="record-value">${MONTH_FULL[bestMonth.month - 1]} ${bestMonth.year} · ${formatMinutes(bestMonth.minutes)} · <span style="color:${kidByKey(bestMonth.child).color};">${kidByKey(bestMonth.child).name}</span></div>
+      </div>
+    </div>
+  ` : '';
+
+  body.innerHTML = dayHtml + monthHtml;
+}
+
+function renderTrophy() {
+  const mk = `${trophyYear}-${String(trophyMonth).padStart(2, '0')}`;
+  const totals = {};
+  KIDS.forEach((kid) => {
+    totals[kid.key] = sumHistory(state.history, kid.key, (d) => d.slice(0, 7) === mk);
+  });
+  const leoTotal = totals.leo;
+  const bertaTotal = totals.berta;
+  const body = document.getElementById('trophy-body');
+
+  if (leoTotal === 0 && bertaTotal === 0) {
+    body.innerHTML = `<div class="record-empty">Sin lecturas registradas en ${MONTH_FULL[trophyMonth - 1].toLowerCase()} de ${trophyYear}.</div>`;
+    return;
+  }
+
+  if (leoTotal === bertaTotal) {
+    body.innerHTML = `
+      <div class="trophy-result">
+        <span class="trophy-icon">🤝</span>
+        <div class="trophy-winner">Empate</div>
+        <div class="trophy-detail">Leo ${formatMinutes(leoTotal)} · Berta ${formatMinutes(bertaTotal)}</div>
+      </div>
+    `;
+    return;
+  }
+
+  const winnerKey = leoTotal > bertaTotal ? 'leo' : 'berta';
+  const winner = kidByKey(winnerKey);
+  const loserKey = winnerKey === 'leo' ? 'berta' : 'leo';
+  const loser = kidByKey(loserKey);
+
+  body.innerHTML = `
+    <div class="trophy-result">
+      <span class="trophy-icon">🏆</span>
+      <div class="trophy-winner" style="color:${winner.color};">${winner.name}</div>
+      <div class="trophy-detail">${formatMinutes(totals[winnerKey])} frente a ${formatMinutes(totals[loserKey])} de ${loser.name}</div>
+    </div>
+  `;
+}
+
+function syncSelectors() {
+  const years = getAvailableYears(state.history);
+  const yearsKey = years.join(',');
+
+  if (yearsKey !== lastYearsKey) {
+    lastYearsKey = yearsKey;
+
+    const chartYearSelect = document.getElementById('chart-year-select');
+    chartYearSelect.innerHTML = years.map((y) => `<option value="${y}">${y}</option>`).join('');
+    chartYearSelect.value = String(selectedYear);
+
+    const trophyYearSelect = document.getElementById('trophy-year-select');
+    trophyYearSelect.innerHTML = years.map((y) => `<option value="${y}">${y}</option>`).join('');
+    trophyYearSelect.value = String(trophyYear);
+
+    const trophyMonthSelect = document.getElementById('trophy-month-select');
+    if (!trophyMonthSelect.options.length) {
+      trophyMonthSelect.innerHTML = MONTH_FULL.map((m, i) => `<option value="${i + 1}">${m}</option>`).join('');
+      trophyMonthSelect.value = String(trophyMonth);
+    }
+  }
+}
+// ---- Recompensas ----
+
+function getWeekDates(ref) {
+  // Semana de domingo a sábado que contiene la fecha ref
+  const d = new Date(ref);
+  const day = d.getDay(); // domingo = 0
+  const sunday = new Date(d);
+  sunday.setDate(d.getDate() - day);
+  const dates = [];
+  for (let i = 0; i < 7; i++) {
+    const x = new Date(sunday);
+    x.setDate(sunday.getDate() + i);
+    dates.push(dateKey(x));
+  }
+  return dates;
+}
+
+function getMonthDates(ref) {
+  const y = ref.getFullYear();
+  const m = ref.getMonth();
+  const daysInMonth = new Date(y, m + 1, 0).getDate();
+  const dates = [];
+  for (let i = 1; i <= daysInMonth; i++) {
+    dates.push(dateKey(new Date(y, m, i)));
+  }
+  return dates;
+}
+
+function isTaskDone(child, taskId, date) {
+  return state.rewards.completions.some((c) => c.child === child && c.taskId === taskId && c.date === date);
+}
+
+function toggleTask(child, taskId, date) {
+  const today = dateKey(new Date());
+  const target = date && date <= today ? date : today;
+  if (date && date > today) return; // no se pueden marcar días futuros
+  const idx = state.rewards.completions.findIndex((c) => c.child === child && c.taskId === taskId && c.date === target);
+  if (idx >= 0) state.rewards.completions.splice(idx, 1);
+  else state.rewards.completions.push({ child, taskId, date: target });
+  saveState(); renderRewards();
+}
+
+function addTask(name) {
+  const trimmed = (name || '').trim();
+  if (!trimmed) return;
+  state.rewards.tasks.push({ id: 't' + Date.now(), name: trimmed });
+  saveState(); renderRewards();
+}
+
+function deleteTask(taskId) {
+  const task = state.rewards.tasks.find((t) => t.id === taskId);
+  if (!task) return;
+  if (!confirm(`¿Eliminar el reto "${task.name}"? También se borrarán sus marcas.`)) return;
+  state.rewards.tasks = state.rewards.tasks.filter((t) => t.id !== taskId);
+  state.rewards.completions = state.rewards.completions.filter((c) => c.taskId !== taskId);
+  saveState(); renderRewards();
+}
+
+function calcProgress(child, dates) {
+  const numTasks = state.rewards.tasks.length;
+  if (numTasks === 0) return { pct: 0, done: 0, total: 0 };
+  // El total es sobre el periodo completo (semana o mes entero), de modo que
+  // el porcentaje va creciendo a medida que se cumplen retos día a día.
+  const total = numTasks * dates.length;
+  if (total === 0) return { pct: 0, done: 0, total: 0 };
+  const done = state.rewards.completions.filter(
+    (c) => c.child === child && dates.includes(c.date)
+  ).length;
+  return { pct: Math.round((done / total) * 100), done, total };
+}
+
+function progressBlockHtml(kid, label, prog, goalPct, prize) {
+  const reached = prog.total > 0 && prog.pct >= goalPct;
+  return `
+    <div class="progress-block">
+      <div class="progress-head">
+        <span class="progress-name" style="color:${kid.color};">${kid.name} · ${label}</span>
+        <span class="progress-pct">${prog.pct}% (objetivo ${goalPct}%)</span>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" style="width:${Math.min(100, prog.pct)}%; background:${kid.color};"></div>
+        <div class="progress-goal" style="left:${goalPct}%;"></div>
+      </div>
+      ${reached && prize ? `<div class="prize-won">🎉 ¡Premio conseguido: ${prize}!</div>` : ''}
+    </div>
+  `;
+}
+
+function getWeeksOfYear(year) {
+  // Semanas (domingo-sábado) cuyo sábado cae dentro del año indicado
+  const weeks = [];
+  const first = new Date(year, 0, 1);
+  let sunday = new Date(year, 0, 1 - first.getDay());
+  while (true) {
+    const saturday = new Date(sunday);
+    saturday.setDate(sunday.getDate() + 6);
+    if (saturday.getFullYear() > year) break;
+    if (saturday.getFullYear() === year) {
+      weeks.push(getWeekDates(sunday));
+    }
+    sunday = new Date(sunday);
+    sunday.setDate(sunday.getDate() + 7);
+  }
+  return weeks;
+}
+
+function renderWeekStats() {
+  const body = document.getElementById('rw-weeks-body');
+  if (state.rewards.tasks.length === 0) {
+    body.innerHTML = '<div class="rw-empty">Define retos para poder contar semanas cumplidas.</div>';
+    return;
+  }
+  const weeks = getWeeksOfYear(rwStatsYear);
+  const today = dateKey(new Date());
+  // Solo cuentan semanas ya terminadas (su domingo es hoy o anterior)
+  const finishedWeeks = weeks.filter((w) => w[6] <= today);
+
+  if (finishedWeeks.length === 0) {
+    body.innerHTML = `<div class="rw-empty">Aún no hay semanas terminadas en ${rwStatsYear}.</div>`;
+    return;
+  }
+
+  body.innerHTML = KIDS.map((kid) => {
+    const won = finishedWeeks.filter((w) => {
+      const prog = calcProgress(kid.key, w);
+      return prog.total > 0 && prog.pct >= state.rewards.weeklyPct;
+    }).length;
+    const pct = Math.round((won / finishedWeeks.length) * 100);
+    return `
+      <div class="progress-block">
+        <div class="progress-head">
+          <span class="progress-name" style="color:${kid.color};">${kid.name} · ${rwStatsYear}</span>
+          <span class="progress-pct">${won} de ${finishedWeeks.length} semanas cumplidas</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" style="width:${pct}%; background:${kid.color};"></div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderRewards() {
+  // Ajustes (solo se rellenan si el usuario no está editando)
+  const wp = document.getElementById('rw-weekly-prize');
+  const mp = document.getElementById('rw-monthly-prize');
+  const wpc = document.getElementById('rw-weekly-pct');
+  const mpc = document.getElementById('rw-monthly-pct');
+  if (document.activeElement !== wp) wp.value = state.rewards.weeklyPrize;
+  if (document.activeElement !== mp) mp.value = state.rewards.monthlyPrize;
+  if (document.activeElement !== wpc) wpc.value = state.rewards.weeklyPct;
+  if (document.activeElement !== mpc) mpc.value = state.rewards.monthlyPct;
+
+  // Lista de retos con la rejilla de la semana actual (domingo a sábado)
+  const list = document.getElementById('rw-task-list');
+  const today = dateKey(new Date());
+  const weekDatesNow = getWeekDates(new Date());
+  const DAY_LETTERS = ['D', 'L', 'M', 'X', 'J', 'V', 'S'];
+  if (state.rewards.tasks.length === 0) {
+    list.innerHTML = '<div class="rw-empty">Añade el primer reto abajo (ej. "Hacer la cama", "Recoger los juguetes").</div>';
+  } else {
+    list.innerHTML = state.rewards.tasks.map((t) => `
+      <div class="task-row-week">
+        <div class="task-row-head">
+          <span class="task-name">${t.name}</span>
+          <button class="task-del" data-del-task="${t.id}" aria-label="Eliminar reto">✕</button>
+        </div>
+        <div class="week-grid">
+          <div class="week-grid-row week-grid-header">
+            <span class="week-grid-label"></span>
+            ${weekDatesNow.map((d, i) => `<span class="week-day-letter ${d === today ? 'is-today' : ''}">${DAY_LETTERS[i]}</span>`).join('')}
+          </div>
+          ${KIDS.map((kid) => `
+            <div class="week-grid-row">
+              <span class="week-grid-label" style="color:${kid.color};">${kid.name}</span>
+              ${weekDatesNow.map((d) => {
+                const done = isTaskDone(kid.key, t.id, d);
+                const future = d > today;
+                return `<button class="day-cell ${done ? 'done' : ''} ${d === today ? 'is-today' : ''}"
+                  style="${done ? `background:${kid.color};border-color:${kid.color};` : ''}"
+                  data-task="${t.id}" data-child="${kid.key}" data-date="${d}" ${future ? 'disabled' : ''}
+                  aria-label="${kid.name} ${d}">${done ? '✓' : ''}</button>`;
+              }).join('')}
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // Progreso semanal y mensual
+  const progressBody = document.getElementById('rw-progress-body');
+  if (state.rewards.tasks.length === 0) {
+    progressBody.innerHTML = '<div class="rw-empty">El progreso aparecerá cuando haya retos definidos.</div>';
+  } else {
+    const now = new Date();
+    const weekDates = getWeekDates(now);
+    const lastWeekRef = new Date(now);
+    lastWeekRef.setDate(now.getDate() - 7);
+    const lastWeekDates = getWeekDates(lastWeekRef);
+    const monthDates = getMonthDates(now);
+    progressBody.innerHTML = KIDS.map((kid) => {
+      const wProg = calcProgress(kid.key, weekDates);
+      const lwProg = calcProgress(kid.key, lastWeekDates);
+      const mProg = calcProgress(kid.key, monthDates);
+      const lwReached = lwProg.total > 0 && lwProg.pct >= state.rewards.weeklyPct;
+      const lastWeekHtml = lwProg.total > 0 ? `
+        <div style="color:${lwReached ? '#7BC47F' : '#D9776B'};font-size:0.78rem;margin:-0.4rem 0 0.9rem;">
+          Semana pasada: ${lwReached ? '✅ cumplida' : '❌ no cumplida'} (${lwProg.pct}% de un objetivo del ${state.rewards.weeklyPct}%)
+        </div>
+      ` : '';
+      return progressBlockHtml(kid, 'Esta semana', wProg, state.rewards.weeklyPct, state.rewards.weeklyPrize)
+        + lastWeekHtml
+        + progressBlockHtml(kid, 'Este mes', mProg, state.rewards.monthlyPct, state.rewards.monthlyPrize);
+    }).join('');
+  }
+
+  // Selector de año de la sección de semanas cumplidas (se rellena una vez)
+  if (!rwSelectorsFilled) {
+    rwSelectorsFilled = true;
+    const yearSel = document.getElementById('rw-stats-year');
+    yearSel.innerHTML = getAvailableYears(state.history).map((y) => `<option value="${y}">${y}</option>`).join('');
+    yearSel.value = String(rwStatsYear);
+  }
+
+  renderWeekStats();
+}
+
+function saveRewardSettings() {
+  state.rewards.weeklyPrize = document.getElementById('rw-weekly-prize').value.trim();
+  state.rewards.monthlyPrize = document.getElementById('rw-monthly-prize').value.trim();
+  state.rewards.weeklyPct = Math.min(100, Math.max(1, parseInt(document.getElementById('rw-weekly-pct').value, 10) || 80));
+  state.rewards.monthlyPct = Math.min(100, Math.max(1, parseInt(document.getElementById('rw-monthly-pct').value, 10) || 80));
+  saveState(); renderRewards();
+}
+
+function switchTab(tab) {
+  document.getElementById('tab-contadores').style.display = tab === 'contadores' ? 'block' : 'none';
+  document.getElementById('tab-recompensas').style.display = tab === 'recompensas' ? 'block' : 'none';
+  document.querySelectorAll('.tab-btn[data-tab]').forEach((b) => {
+    b.classList.toggle('active', b.dataset.tab === tab);
+  });
+  const title = document.getElementById('main-title');
+  const sub = document.getElementById('main-sub');
+  if (tab === 'recompensas') {
+    title.textContent = 'Tabla de recompensas';
+    sub.innerHTML = 'Retos cumplidos que se convierten en <b>premios</b>.';
+    renderRewards();
+  } else {
+    title.textContent = 'El trueque de páginas y pantalla';
+    sub.innerHTML = 'Cada minuto leído vale <b>2 minutos</b> de tele.';
+  }
+}
+
+function render() {
+  // Tarjeta de tele
+  const tvRunning = !!state.tvTimerStart;
+  const remainingMs = tvRunning ? Math.max(0, state.tvTimerStartMinutes * 60000 - (Date.now() - state.tvTimerStart)) : state.tv * 60000;
+  document.getElementById('tv-label-text').textContent = tvRunning ? 'Viendo tele…' : 'Tele acumulada';
+  document.getElementById('tv-value').textContent = tvRunning ? formatClock(remainingMs) : formatMinutes(state.tv);
+  document.getElementById('tv-start-btn').style.display = tvRunning ? 'none' : 'flex';
+  document.getElementById('tv-stop-btn').style.display = tvRunning ? 'flex' : 'none';
+  document.getElementById('tv-start-btn').disabled = state.tv <= 0;
+  document.getElementById('tv-start-btn').style.background = '#A794D1';
+  document.getElementById('tv-start-btn').style.color = '#12161F';
+  document.getElementById('tv-stop-btn').style.background = '#A794D1';
+  document.getElementById('tv-stop-btn').style.color = '#12161F';
+  document.getElementById('tv-hint').textContent = tvRunning ? 'Sonará una alarma cuando llegue a cero' : 'Pulsa iniciar para poner la cuenta atrás mientras ven la tele';
+  document.querySelectorAll('.tv-chip').forEach((btn) => {
+    btn.disabled = state.tv <= 0 || tvRunning;
+    btn.style.borderColor = '#A794D1'; btn.style.color = '#A794D1';
+  });
+  document.getElementById('tv-manual-input').disabled = tvRunning;
+  document.getElementById('tv-manual-btn').disabled = tvRunning;
+
+  // Tarjetas de niños
+  const grid = document.getElementById('children-grid');
+  grid.innerHTML = '';
+  KIDS.forEach((kid) => grid.appendChild(renderChildCard(kid)));
+
+  syncSelectors();
+  renderYearChart();
+  renderRecords();
+  renderTrophy();
+
+  ensureTicking();
+}
+
+// Eventos estáticos
+document.getElementById('tv-start-btn').addEventListener('click', startTvCountdown);
+document.getElementById('tv-stop-btn').addEventListener('click', () => stopTvCountdown(false));
+document.querySelectorAll('.tv-chip').forEach((btn) => {
+  btn.addEventListener('click', () => spendTv(Math.min(parseInt(btn.dataset.min, 10), state.tv)));
+});
+document.getElementById('tv-manual-btn').addEventListener('click', () => {
+  const input = document.getElementById('tv-manual-input');
+  const n = parseInt(input.value, 10);
+  if (n > 0) { spendTv(Math.min(n, state.tv)); input.value = ''; }
+});
+document.getElementById('reset-all').addEventListener('click', resetAll);
+
+// ---- Exportación ----
+
+function downloadCSV(filename, rows) {
+  // Separador de punto y coma para compatibilidad con Excel en español
+  const csv = '\uFEFF' + rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(';')).join('\r\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(a.href);
+}
+
+function exportLecturas() {
+  const rows = [['Fecha', 'Niño', 'Minutos leídos']];
+  [...state.history]
+    .sort((a, b) => a.date.localeCompare(b.date))
+    .forEach((h) => {
+      rows.push([h.date, kidByKey(h.child) ? kidByKey(h.child).name : h.child, h.minutes]);
+    });
+  downloadCSV(`lecturas_leo_berta_${dateKey(new Date())}.csv`, rows);
+}
+
+function exportRetos() {
+  const rows = [['Fecha', 'Niño', 'Reto']];
+  [...state.rewards.completions]
+    .sort((a, b) => a.date.localeCompare(b.date))
+    .forEach((c) => {
+      const task = state.rewards.tasks.find((t) => t.id === c.taskId);
+      rows.push([c.date, kidByKey(c.child) ? kidByKey(c.child).name : c.child, task ? task.name : '(reto eliminado)']);
+    });
+  downloadCSV(`retos_leo_berta_${dateKey(new Date())}.csv`, rows);
+}
+
+document.getElementById('export-lecturas').addEventListener('click', exportLecturas);
+document.getElementById('export-retos').addEventListener('click', exportRetos);
+
+document.getElementById('timeup-close').addEventListener('click', () => {
+  document.getElementById('timeup-overlay').style.display = 'none';
+});
+
+// Pestañas
+document.querySelectorAll('.tab-btn[data-tab]').forEach((btn) => {
+  btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+});
+
+// Recompensas: ajustes y retos
+document.getElementById('rw-save-settings').addEventListener('click', saveRewardSettings);
+document.getElementById('rw-add-task').addEventListener('click', () => {
+  const input = document.getElementById('rw-new-task');
+  addTask(input.value);
+  input.value = '';
+});
+document.getElementById('rw-new-task').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    addTask(e.target.value);
+    e.target.value = '';
+  }
+});
+document.getElementById('rw-task-list').addEventListener('click', (e) => {
+  const cell = e.target.closest('.day-cell');
+  const delBtn = e.target.closest('[data-del-task]');
+  if (cell && !cell.disabled) toggleTask(cell.dataset.child, cell.dataset.task, cell.dataset.date);
+  if (delBtn) deleteTask(delBtn.dataset.delTask);
+});
+document.getElementById('rw-stats-year').addEventListener('change', (e) => {
+  rwStatsYear = Number(e.target.value);
+  renderWeekStats();
+});
+
+document.getElementById('chart-year-select').addEventListener('change', (e) => {
+  selectedYear = Number(e.target.value);
+  render();
+});
+document.getElementById('trophy-month-select').addEventListener('change', (e) => {
+  trophyMonth = Number(e.target.value);
+  renderTrophy();
+});
+document.getElementById('trophy-year-select').addEventListener('change', (e) => {
+  trophyYear = Number(e.target.value);
+  renderTrophy();
+});
+
+// Eventos delegados (tarjetas de niños se regeneran en cada render)
+document.getElementById('children-grid').addEventListener('click', (e) => {
+  const startBtn = e.target.closest('.child-start');
+  const stopBtn = e.target.closest('.child-stop');
+  const resetBtn = e.target.closest('[data-reset]');
+  const manualBtn = e.target.closest('.child-manual-btn');
+  if (startBtn) startTimer(startBtn.dataset.child);
+  if (stopBtn) stopTimer(stopBtn.dataset.child);
+  if (resetBtn) {
+    const key = resetBtn.dataset.reset;
+    const kid = KIDS.find((k) => k.key === key);
+    resetChild(key, kid.name);
+  }
+  if (manualBtn) {
+    const key = manualBtn.dataset.child;
+    const input = document.querySelector(`.child-manual-input[data-child="${key}"]`);
+    const dateInput = document.querySelector(`.child-manual-date[data-child="${key}"]`);
+    const n = parseInt(input.value, 10);
+    if (n > 0) { logReading(key, n, dateInput ? dateInput.value : null); }
+  }
+});
+
+render();
+syncFromRemote();
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') syncFromRemote();
+});
+setInterval(() => {
+  if (document.visibilityState === 'visible') syncFromRemote();
+}, 20000);
+</script>
+</body>
+</html>
