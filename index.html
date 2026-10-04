@@ -187,6 +187,11 @@
   .entry-edit-form input { background: #12161F; color: #F3EEE1; border: 1px solid #2A3240; border-radius: 0.5rem; padding: 0.3rem 0.5rem; font-size: 0.8rem; outline: none; }
   .entry-edit-form input[type=number] { width: 4.5rem; }
   .entry-save-btn { background: #5B8DEF !important; color: #12161F !important; border: none !important; font-weight: 600; }
+  .entry-select, .tv-select { accent-color: #5B8DEF; width: 1.05rem; height: 1.05rem; cursor: pointer; flex-shrink: 0; }
+  .bulk-bar { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 0.7rem; }
+  .bulk-bar:empty { display: none; }
+  .bulk-select-all { display: flex; align-items: center; gap: 0.4rem; color: #8B93A3; font-size: 0.78rem; cursor: pointer; }
+  .bulk-delete-btn { background: none; border: 1px solid #D9776B; color: #D9776B !important; border-radius: 0.5rem; padding: 0.3rem 0.7rem; font-size: 0.75rem; font-weight: 600; cursor: pointer; }
 </style>
 </head>
 <body style="background:#0E1B33; color:#F3EEE1;">
@@ -343,8 +348,16 @@
           <option value="berta">Berta</option>
         </select>
       </div>
+      <div class="bulk-bar" id="registros-bulk-bar"></div>
       <div id="registros-body" class="entry-list"></div>
       <div style="color:#8B93A3;font-size:0.72rem;margin-top:0.9rem;">Al editar o eliminar una lectura, la tele acumulada se ajusta automáticamente.</div>
+    </div>
+
+    <div class="panel" style="margin-top:1.25rem;">
+      <div class="rw-section-title font-display">📺 Tele gastada</div>
+      <div class="bulk-bar" id="tvlog-bulk-bar"></div>
+      <div id="tvlog-body" class="entry-list"></div>
+      <div style="color:#8B93A3;font-size:0.72rem;margin-top:0.9rem;">Al editar o eliminar un registro, la tele disponible se ajusta automáticamente.</div>
     </div>
 
     <div class="panel" style="margin-top:1.25rem;">
@@ -370,6 +383,7 @@ const DEFAULT_STATE = {
   tvTimerStart: null,
   tvTimerStartMinutes: 0,
   history: [],
+  tvHistory: [],
   updatedAt: 0,
   rewards: {
     tasks: [],
@@ -395,7 +409,10 @@ let rwStatsYear = new Date().getFullYear();
 let lastYearsKey = null;
 let rwSelectorsFilled = false;
 let editingEntryId = null;
-let pendingDelete = null; // { scope: 'entry' | 'task', id }
+let editingTvId = null;
+let selectedEntryIds = new Set();
+let selectedTvIds = new Set();
+let pendingDelete = null; // { scope: 'entry' | 'task' | 'tv' | 'entries-bulk' | 'tv-bulk', id }
 
 function makeId() {
   return 'h' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
@@ -414,6 +431,7 @@ function loadState() {
         ...DEFAULT_STATE,
         ...parsed,
         history: withHistoryIds(parsed.history),
+        tvHistory: withHistoryIds(parsed.tvHistory),
         rewards: { ...DEFAULT_STATE.rewards, ...(parsed.rewards || {}) },
       };
     }
@@ -451,6 +469,7 @@ async function syncFromRemote() {
         ...DEFAULT_STATE,
         ...remote,
         history: withHistoryIds(remote.history),
+        tvHistory: withHistoryIds(remote.tvHistory),
         rewards: { ...DEFAULT_STATE.rewards, ...(remote.rewards || {}) },
       };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
@@ -634,9 +653,25 @@ function updateHistoryEntry(id, minutes, date) {
   saveState(); render();
 }
 
+function deleteHistoryEntries(ids) {
+  const idSet = new Set(ids);
+  state.history.filter((h) => idSet.has(h.id)).forEach((entry) => {
+    if (state[entry.child]) {
+      state[entry.child].totalRead = Math.max(0, state[entry.child].totalRead - entry.minutes);
+    }
+    state.tv = Math.max(0, state.tv - entry.minutes * 2);
+  });
+  state.history = state.history.filter((h) => !idSet.has(h.id));
+  saveState(); render();
+}
+
 function spendTv(minutes) {
   if (!minutes || minutes <= 0) return;
+  const spent = Math.min(minutes, state.tv);
   state.tv = Math.max(0, state.tv - minutes);
+  if (spent > 0) {
+    state.tvHistory.push({ id: makeId(), minutes: spent, date: dateKey(new Date()) });
+  }
   saveState(); render();
 }
 
@@ -652,14 +687,46 @@ function stopTvCountdown(auto) {
   if (!state.tvTimerStart) return;
   const elapsedMinutes = (Date.now() - state.tvTimerStart) / 60000;
   const remaining = Math.max(0, state.tvTimerStartMinutes - elapsedMinutes);
-  state.tv = auto ? 0 : Math.round(remaining);
+  const newTv = auto ? 0 : Math.round(remaining);
+  const spent = Math.max(0, state.tvTimerStartMinutes - newTv);
+  state.tv = newTv;
   state.tvTimerStart = null;
   state.tvTimerStartMinutes = 0;
+  if (spent > 0) {
+    state.tvHistory.push({ id: makeId(), minutes: spent, date: dateKey(new Date()) });
+  }
   saveState(); render();
   if (auto) {
     playAlarm();
     document.getElementById('timeup-overlay').style.display = 'flex';
   }
+}
+
+function deleteTvEntry(id) {
+  const entry = state.tvHistory.find((h) => h.id === id);
+  if (!entry) return;
+  state.tvHistory = state.tvHistory.filter((h) => h.id !== id);
+  state.tv += entry.minutes;
+  saveState(); render();
+}
+
+function updateTvEntry(id, minutes, date) {
+  const entry = state.tvHistory.find((h) => h.id === id);
+  if (!entry) return;
+  const delta = minutes - entry.minutes;
+  entry.minutes = minutes;
+  entry.date = date;
+  state.tv = Math.max(0, state.tv - delta);
+  saveState(); render();
+}
+
+function deleteTvEntries(ids) {
+  const idSet = new Set(ids);
+  state.tvHistory.filter((h) => idSet.has(h.id)).forEach((entry) => {
+    state.tv += entry.minutes;
+  });
+  state.tvHistory = state.tvHistory.filter((h) => !idSet.has(h.id));
+  saveState(); render();
 }
 
 function anyTimerRunning() {
@@ -1222,11 +1289,37 @@ function switchTab(tab) {
     title.textContent = 'Editar registros';
     sub.innerHTML = 'Corrige o elimina lecturas registradas por error.';
     editingEntryId = null;
+    editingTvId = null;
+    pendingDelete = null;
     renderRegistros();
+    renderTvLog();
   } else {
     title.textContent = 'PÁGINAS x PANTALLA';
     sub.innerHTML = 'Cada minuto leído vale <b>2 minutos</b> de tele.';
   }
+}
+
+function renderBulkBar(barId, items, selectedSet, bulkScope) {
+  const bar = document.getElementById(barId);
+  if (items.length === 0) { bar.innerHTML = ''; return; }
+  const visibleIds = items.map((i) => i.id);
+  const selectedVisible = visibleIds.filter((id) => selectedSet.has(id));
+  const allSelected = selectedVisible.length > 0 && selectedVisible.length === visibleIds.length;
+  const confirming = pendingDelete && pendingDelete.scope === bulkScope;
+  bar.innerHTML = `
+    <label class="bulk-select-all">
+      <input type="checkbox" class="bulk-select-all-cb" ${allSelected ? 'checked' : ''}>
+      Seleccionar todos
+    </label>
+    ${selectedVisible.length > 0 ? (confirming ? `
+      <div class="confirm-inline">
+        <span class="confirm-inline-text">¿Eliminar ${selectedVisible.length} registro${selectedVisible.length > 1 ? 's' : ''}?</span>
+        <button class="confirm-yes-btn bulk-confirm-yes">Sí</button>
+        <button class="confirm-no-btn bulk-confirm-no">No</button>
+      </div>` : `
+      <button class="bulk-delete-btn">Eliminar seleccionados (${selectedVisible.length})</button>`
+    ) : ''}
+  `;
 }
 
 function renderRegistros() {
@@ -1235,6 +1328,9 @@ function renderRegistros() {
   const items = [...state.history]
     .filter((h) => filter === 'all' || h.child === filter)
     .sort((a, b) => b.date.localeCompare(a.date));
+  const validIds = new Set(state.history.map((h) => h.id));
+  [...selectedEntryIds].forEach((id) => { if (!validIds.has(id)) selectedEntryIds.delete(id); });
+  renderBulkBar('registros-bulk-bar', items, selectedEntryIds, 'entries-bulk');
   if (items.length === 0) {
     body.innerHTML = '<div class="record-empty">No hay lecturas registradas.</div>';
     return;
@@ -1257,9 +1353,11 @@ function renderRegistros() {
         </div>`;
     }
     const confirming = pendingDelete && pendingDelete.scope === 'entry' && pendingDelete.id === h.id;
+    const checked = selectedEntryIds.has(h.id) ? 'checked' : '';
     return `
       <div class="entry-row" data-id="${h.id}">
         <div class="entry-info">
+          <input type="checkbox" class="entry-select" data-id="${h.id}" ${checked}>
           <span class="dot-sm" style="background:${color};"></span>
           <span class="entry-name">${name}</span>
           <span class="entry-date">${h.date}</span>
@@ -1274,6 +1372,53 @@ function renderRegistros() {
         <div class="entry-actions">
           <button class="entry-edit-btn" data-id="${h.id}">Editar</button>
           <button class="entry-del-btn" data-id="${h.id}">Eliminar</button>
+        </div>`}
+      </div>`;
+  }).join('');
+}
+
+function renderTvLog() {
+  const items = [...state.tvHistory].sort((a, b) => b.date.localeCompare(a.date));
+  const validIds = new Set(state.tvHistory.map((h) => h.id));
+  [...selectedTvIds].forEach((id) => { if (!validIds.has(id)) selectedTvIds.delete(id); });
+  renderBulkBar('tvlog-bulk-bar', items, selectedTvIds, 'tv-bulk');
+  const body = document.getElementById('tvlog-body');
+  if (items.length === 0) {
+    body.innerHTML = '<div class="record-empty">No hay tele registrada todavía.</div>';
+    return;
+  }
+  body.innerHTML = items.map((h) => {
+    if (h.id === editingTvId) {
+      return `
+        <div class="entry-row" data-id="${h.id}">
+          <div class="entry-edit-form">
+            <span class="dot-sm" style="background:#A794D1;"></span>
+            <input type="date" class="tv-edit-date" value="${h.date}" max="${dateKey(new Date())}">
+            <input type="number" min="1" class="tv-edit-minutes" value="${h.minutes}">
+            <button class="tv-save-btn" data-id="${h.id}">Guardar</button>
+            <button class="tv-cancel-btn" data-id="${h.id}">Cancelar</button>
+          </div>
+        </div>`;
+    }
+    const confirming = pendingDelete && pendingDelete.scope === 'tv' && pendingDelete.id === h.id;
+    const checked = selectedTvIds.has(h.id) ? 'checked' : '';
+    return `
+      <div class="entry-row" data-id="${h.id}">
+        <div class="entry-info">
+          <input type="checkbox" class="tv-select" data-id="${h.id}" ${checked}>
+          <span class="dot-sm" style="background:#A794D1;"></span>
+          <span class="entry-date">${h.date}</span>
+          <span class="entry-min">${formatMinutes(h.minutes)}</span>
+        </div>
+        ${confirming ? `
+        <div class="confirm-inline">
+          <span class="confirm-inline-text">¿Eliminar?</span>
+          <button class="confirm-yes-btn tv-confirm-yes" data-id="${h.id}">Sí</button>
+          <button class="confirm-no-btn tv-confirm-no" data-id="${h.id}">No</button>
+        </div>` : `
+        <div class="entry-actions">
+          <button class="tv-edit-btn" data-id="${h.id}">Editar</button>
+          <button class="tv-del-btn" data-id="${h.id}">Eliminar</button>
         </div>`}
       </div>`;
   }).join('');
@@ -1440,12 +1585,18 @@ document.getElementById('reg-add-btn').addEventListener('click', () => {
 });
 document.getElementById('reg-filter-child').addEventListener('change', renderRegistros);
 document.getElementById('registros-body').addEventListener('click', (e) => {
+  const selectCb = e.target.closest('.entry-select');
   const editBtn = e.target.closest('.entry-edit-btn');
   const delBtn = e.target.closest('.entry-del-btn');
   const yesBtn = e.target.closest('.entry-confirm-yes');
   const noBtn = e.target.closest('.entry-confirm-no');
   const saveBtn = e.target.closest('.entry-save-btn');
   const cancelBtn = e.target.closest('.entry-cancel-btn');
+  if (selectCb) {
+    if (selectCb.checked) selectedEntryIds.add(selectCb.dataset.id);
+    else selectedEntryIds.delete(selectCb.dataset.id);
+    renderRegistros();
+  }
   if (editBtn) { editingEntryId = editBtn.dataset.id; pendingDelete = null; renderRegistros(); }
   if (cancelBtn) { editingEntryId = null; renderRegistros(); }
   if (delBtn) { pendingDelete = { scope: 'entry', id: delBtn.dataset.id }; renderRegistros(); }
@@ -1461,6 +1612,77 @@ document.getElementById('registros-body').addEventListener('click', (e) => {
       editingEntryId = null;
       renderRegistros();
     }
+  }
+});
+document.getElementById('registros-bulk-bar').addEventListener('click', (e) => {
+  const selectAllCb = e.target.closest('.bulk-select-all-cb');
+  const bulkDelBtn = e.target.closest('.bulk-delete-btn');
+  const yesBtn = e.target.closest('.bulk-confirm-yes');
+  const noBtn = e.target.closest('.bulk-confirm-no');
+  if (selectAllCb) {
+    const filter = document.getElementById('reg-filter-child').value;
+    const items = [...state.history].filter((h) => filter === 'all' || h.child === filter);
+    if (selectAllCb.checked) items.forEach((h) => selectedEntryIds.add(h.id));
+    else items.forEach((h) => selectedEntryIds.delete(h.id));
+    renderRegistros();
+  }
+  if (bulkDelBtn) { pendingDelete = { scope: 'entries-bulk' }; renderRegistros(); }
+  if (noBtn) { pendingDelete = null; renderRegistros(); }
+  if (yesBtn) {
+    deleteHistoryEntries([...selectedEntryIds]);
+    selectedEntryIds.clear();
+    pendingDelete = null;
+    renderRegistros();
+  }
+});
+document.getElementById('tvlog-body').addEventListener('click', (e) => {
+  const selectCb = e.target.closest('.tv-select');
+  const editBtn = e.target.closest('.tv-edit-btn');
+  const delBtn = e.target.closest('.tv-del-btn');
+  const yesBtn = e.target.closest('.tv-confirm-yes');
+  const noBtn = e.target.closest('.tv-confirm-no');
+  const saveBtn = e.target.closest('.tv-save-btn');
+  const cancelBtn = e.target.closest('.tv-cancel-btn');
+  if (selectCb) {
+    if (selectCb.checked) selectedTvIds.add(selectCb.dataset.id);
+    else selectedTvIds.delete(selectCb.dataset.id);
+    renderTvLog();
+  }
+  if (editBtn) { editingTvId = editBtn.dataset.id; pendingDelete = null; renderTvLog(); }
+  if (cancelBtn) { editingTvId = null; renderTvLog(); }
+  if (delBtn) { pendingDelete = { scope: 'tv', id: delBtn.dataset.id }; renderTvLog(); }
+  if (noBtn) { pendingDelete = null; renderTvLog(); }
+  if (yesBtn) { deleteTvEntry(yesBtn.dataset.id); pendingDelete = null; renderTvLog(); }
+  if (saveBtn) {
+    const row = saveBtn.closest('.entry-row');
+    const dateInput = row.querySelector('.tv-edit-date');
+    const minInput = row.querySelector('.tv-edit-minutes');
+    const minutes = parseInt(minInput.value, 10);
+    if (minutes > 0 && dateInput.value) {
+      updateTvEntry(saveBtn.dataset.id, minutes, dateInput.value);
+      editingTvId = null;
+      renderTvLog();
+    }
+  }
+});
+document.getElementById('tvlog-bulk-bar').addEventListener('click', (e) => {
+  const selectAllCb = e.target.closest('.bulk-select-all-cb');
+  const bulkDelBtn = e.target.closest('.bulk-delete-btn');
+  const yesBtn = e.target.closest('.bulk-confirm-yes');
+  const noBtn = e.target.closest('.bulk-confirm-no');
+  if (selectAllCb) {
+    const items = [...state.tvHistory];
+    if (selectAllCb.checked) items.forEach((h) => selectedTvIds.add(h.id));
+    else items.forEach((h) => selectedTvIds.delete(h.id));
+    renderTvLog();
+  }
+  if (bulkDelBtn) { pendingDelete = { scope: 'tv-bulk' }; renderTvLog(); }
+  if (noBtn) { pendingDelete = null; renderTvLog(); }
+  if (yesBtn) {
+    deleteTvEntries([...selectedTvIds]);
+    selectedTvIds.clear();
+    pendingDelete = null;
+    renderTvLog();
   }
 });
 
